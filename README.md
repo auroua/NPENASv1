@@ -1,6 +1,6 @@
 # Neural Predictor Guided Evolution for Neural Architecture Search
 
-This repository contains code for paper [NPENAS: Neural Predictor Guided Evolution for Neural Architecture Search](https://arxiv.org/abs/2003.12857).
+This repository contains code for paper [NPENAS: Neural Predictor Guided Evolution for Neural Architecture Search](https://arxiv.org/abs/2003.12857v2).
 
 We plan to release the source code in September.
 
