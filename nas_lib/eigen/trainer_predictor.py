@@ -3,14 +3,19 @@
 import torch
 import random
 from ..models.gin_predictor import NasBenchGINPredictorAgent
+from ..models.gin_predictor_celu import NasBenchGINPredictorAgentCELU
 from gnn_lib.data import Data, Batch
 from ..utils.metric_logger import MetricLogger
 from ..utils.utils_solver import CosineLR, gen_batch_idx, make_agent_optimizer
 
 
 class NasBenchGinPredictorTrainer:
-    def __init__(self, agent_type, lr=0.01, device=None, epochs=10, train_images=10, batch_size=10, rate=10, input_dim=6):
-        self.nas_agent = NasBenchGINPredictorAgent(input_dim=input_dim)
+    def __init__(self, agent_type, lr=0.01, device=None, epochs=10, train_images=10, batch_size=10, rate=10, input_dim=6,
+                 activation_fn='relu'):
+        if activation_fn == 'relu':
+            self.nas_agent = NasBenchGINPredictorAgent(input_dim=input_dim)
+        elif activation_fn == 'celu':
+            self.nas_agent = NasBenchGINPredictorAgentCELU(input_dim=input_dim)
         self.agent_type = agent_type
 
         self.criterion = torch.nn.MSELoss()

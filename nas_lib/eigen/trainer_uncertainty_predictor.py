@@ -3,6 +3,7 @@
 import torch
 import random
 from ..models.gin_uncertainty_predictor import NasBenchGINGaussianAgent
+from ..models.gin_uncertainty_predictor_relu import NasBenchGINGaussianAgentRelu
 from gnn_lib.data import Data, Batch
 from ..layers.loss_gausian import Criterion
 from ..utils.metric_logger import MetricLogger
@@ -10,8 +11,14 @@ from ..utils.utils_solver import CosineLR, gen_batch_idx, make_agent_optimizer
 
 
 class NasBenchGinGaussianTrainer:
-    def __init__(self, agent_type, lr=0.01, device=None, epochs=10, train_images=10, batch_size=10, input_dim=6):
-        self.nas_agent = NasBenchGINGaussianAgent(input_dim=input_dim)
+    def __init__(self, agent_type, lr=0.01, device=None, epochs=10, train_images=10, batch_size=10, input_dim=6,
+                 activation_fn='celu'):
+        if activation_fn == 'celu':
+            self.nas_agent = NasBenchGINGaussianAgent(input_dim=input_dim)
+        elif activation_fn == 'relu':
+            self.nas_agent = NasBenchGINGaussianAgentRelu(input_dim=input_dim)
+        else:
+            raise ValueError()
         self.agent_type = agent_type
 
         self.criterion = Criterion()

@@ -68,13 +68,14 @@ we have to convert this dataset first.
 4. Modify the variable `nas_bench_201_converted_path` in `nas_lib/config.py` to the path that store the processed `NAS-Bench-201` dataset.
 5. Run the following command to execute convert. **This step is memory consuming. The memory of my computer is 32G.**
 ```bash
-python tools_close_domain/train_init_dataset.py 
+# dataset: the dataset used to train the architectures in NASBench-201, choices: ['cifar10-valid', 'cifar100', 'ImageNet16-120']
+python tools_close_domain/train_init_dataset.py --dataset cifar10-valid
 ```
 6. You can run the following command to compare algorithms on `NAS-Bench-201` dataset. *Change the `save_dir` to your directory before running.*
 ```bash
 # gpus: the number of gpus used to execute searching.
 # save_dir: the output path.
-python train_multiple_gpus_close_domain.py --trials 600 --search_budget 100 --search_space nasbench_201 --algo_params nasbench_201 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/
+python train_multiple_gpus_close_domain.py --trials 600 --search_budget 100 --search_space nasbench_201 --algo_params nasbench_201 --gpus 1 --multiprocessing-distributed False --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/
 ``` 
 
 7. Run the following command to visualize the comparison of algorithms. *Change the `save_dir` to the path of `save_dir` in step 6.*
@@ -161,13 +162,16 @@ python tools_close_domain/prediction_compare_parse.py --save_path /home/albert_w
 
 ## Acknowledge
 1. [bananas](https://github.com/naszilla/bananas)
-2. [pytorch_geometric](https://github.com/rusty1s/pytorch_geometric)
-3. [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark)
-4. [detectron2](https://github.com/facebookresearch/detectron2)
-5. [NAS-Bench-101](https://github.com/google-research/nasbench)
-6. [NAS-Bench-201](https://github.com/D-X-Y/NAS-Bench-201)
-7. [darts](https://github.com/quark0/darts)
-8. [AlphaX](https://github.com/linnanwang/AlphaX-NASBench101)
+2. [naszilla](https://github.com/naszilla/naszilla)
+3. [pytorch_geometric](https://github.com/rusty1s/pytorch_geometric)
+4. [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark)
+5. [detectron2](https://github.com/facebookresearch/detectron2)
+6. [NAS-Bench-101](https://github.com/google-research/nasbench)
+7. [NAS-Bench-201](https://github.com/D-X-Y/NAS-Bench-201)
+8. [darts](https://github.com/quark0/darts)
+9. [AlphaX](https://github.com/linnanwang/AlphaX-NASBench101)
+10. [NAS-Bench-NLP](https://github.com/fmsnew/nas-bench-nlp-release)
+11. [NAS-Bench-ASR](https://github.com/SamsungLabs/nb-asr)
 
 ## Contact
 Chen Wei

@@ -11,6 +11,12 @@ def meta_neuralnet_params(param_str):
     elif param_str == 'nasbench_201':
         params = {'search_space': 'nasbench_201', 'loss': 'mape', 'num_layers': 10, 'layer_width': 200,
                   'epochs': 200, 'batch_size': 32, 'lr': .001, 'regularization': 0, 'verbose': 0}
+    elif param_str == 'nasbench_nlp':
+        params = {'search_space': 'nasbench_nlp', 'loss': 'mape', 'num_layers': 10, 'layer_width': 200,
+                  'epochs': 200, 'batch_size': 32, 'lr': .001, 'regularization': 0, 'verbose': 0}
+    elif param_str == 'nasbench_asr':
+        params = {'search_space': 'nasbench_asr', 'loss': 'mape', 'num_layers': 10, 'layer_width': 200,
+                  'epochs': 200, 'batch_size': 32, 'lr': .001, 'regularization': 0, 'verbose': 0}
     else:
         print('invalid meta neural net params')
         sys.exit()
@@ -41,6 +47,12 @@ def algo_params_close_domain(param_str, search_budget=100):
                        'candidate_nums': 100, 'epochs': 1000})
         params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
                        'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300})
+        params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+                       'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': -1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'adj', 'verbose': 1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'nasbot', 'verbose': 1})
     elif param_str == 'nasbench101_case2':
         params.append({'algo_name': 'random', 'total_queries': search_budget})
         params.append({'algo_name': 'evolution', 'total_queries': search_budget, 'population_size': 30, 'num_init': 10, 'k': 10,
@@ -51,11 +63,29 @@ def algo_params_close_domain(param_str, search_budget=100):
         params.append({'algo_name': 'bananas_f', 'total_queries': search_budget, 'num_ensemble': 5,
                        'allow_isomorphisms': False, 'acq_opt_type': 'mutation', 'candidate_nums': 100, 'num_init': 10,
                        'k': 10, 'encode_paths': False})
+        # params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
+        #                'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
+        #                'candidate_nums': 100, 'epochs': 1000, 'activation_fn': 'relu'})
         params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
                        'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
-                       'candidate_nums': 100, 'epochs': 1000})
+                       'candidate_nums': 100, 'epochs': 1000, 'activation_fn': 'celu'})
         params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
-                       'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300})
+                       'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+                       'rate': 10.})
+        # params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+        #                'rate': 100., 'activation_fn': 'relu'})
+        # params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+        #                'rate': 100., 'activation_fn': 'celu'})
+        # params.append({'algo_name': 'gin_predictor_new', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300})
+        params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+                       'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': -1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'adj', 'verbose': 1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'nasbot', 'verbose': 1})
     elif param_str == 'nasbench_201':
         params.append({'algo_name': 'random', 'total_queries': search_budget})
         params.append({'algo_name': 'evolution', 'total_queries': search_budget, 'population_size': 30, 'num_init': 10,
@@ -67,11 +97,92 @@ def algo_params_close_domain(param_str, search_budget=100):
         params.append({'algo_name': 'bananas_f', 'total_queries': search_budget, 'num_ensemble': 5,
                        'allow_isomorphisms': False, 'acq_opt_type': 'mutation', 'candidate_nums': 100, 'num_init': 10,
                        'k': 10, 'encode_paths': False})
+        # params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
+        #                'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
+        #                'candidate_nums': 100, 'epochs': 1000, 'activation_fn': 'relu'})
         params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
                        'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
-                       'candidate_nums': 100, 'epochs': 1000})
+                       'candidate_nums': 100, 'epochs': 1000, 'activation_fn': 'celu'})
+        # params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+        #                'rate': 7.})
         params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
-                       'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300})
+                       'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+                       'rate': 100.})
+        # params.append({'algo_name': 'gin_predictor_new', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300})
+        params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+                       'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': -1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'adj', 'verbose': 0})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'nasbot', 'verbose': 0})
+    elif param_str == 'nasbench_nlp':
+        params.append({'algo_name': 'random', 'total_queries': search_budget})
+        params.append({'algo_name': 'evolution', 'total_queries': search_budget, 'population_size': 30, 'num_init': 10,
+                       'k': 10, 'tournament_size': 10, 'mutation_rate': 0.3, 'allow_isomorphisms': False,
+                       'deterministic': True})
+        params.append({'algo_name': 'bananas', 'total_queries': search_budget, 'num_ensemble': 5,
+                       'allow_isomorphisms': False, 'acq_opt_type': 'mutation', 'candidate_nums': 100, 'num_init': 10,
+                       'k': 10, 'encode_paths': True, 'eva_new': False, 'mutation_rate': 0.3})
+        params.append({'algo_name': 'bananas_f', 'total_queries': search_budget, 'num_ensemble': 5,
+                       'allow_isomorphisms': False, 'acq_opt_type': 'mutation', 'candidate_nums': 100, 'num_init': 10,
+                       'k': 10, 'encode_paths': False, 'mutation_rate': 0.3})
+        # params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
+        #                'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
+        #                'candidate_nums': 100, 'epochs': 1000, 'mutation_rate': 0.3, 'activation_fn': 'relu'})
+        params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
+                       'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
+                       'candidate_nums': 100, 'epochs': 1000, 'mutation_rate': 0.3, 'activation_fn': 'celu'})
+        params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
+                       'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+                       'mutation_rate': 0.3, 'rate': 5.})
+        # params.append({'algo_name': 'gin_predictor_new', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+        #                'mutation_rate': 0.3, 'rate': 5.})
+        # params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+        #                'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': -1})
+        params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+                       'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': 0.3})
+        # params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+        #                'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': 0.5})
+        # params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+        #                'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': 0.7})
+        # params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+        #                'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': 1.0})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'adj', 'verbose': 1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'nasbot', 'verbose': 1})
+    elif param_str == 'nasbench_asr':
+        params.append({'algo_name': 'random', 'total_queries': search_budget})
+        params.append({'algo_name': 'evolution', 'total_queries': search_budget, 'population_size': 30, 'num_init': 10,
+                       'k': 10, 'tournament_size': 10, 'mutation_rate': -1, 'allow_isomorphisms': False,
+                       'deterministic': True})
+        params.append({'algo_name': 'bananas', 'total_queries': search_budget, 'num_ensemble': 5,
+                       'allow_isomorphisms': False, 'acq_opt_type': 'mutation', 'candidate_nums': 100, 'num_init': 10,
+                       'k': 10, 'encode_paths': True, 'eva_new': False, 'mutation_rate': 1.0})
+        params.append({'algo_name': 'bananas_f', 'total_queries': search_budget, 'num_ensemble': 5,
+                       'allow_isomorphisms': False, 'acq_opt_type': 'mutation', 'candidate_nums': 100, 'num_init': 10,
+                       'k': 10, 'encode_paths': False, 'mutation_rate': 1.0})
+        # params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
+        #                'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
+        #                'candidate_nums': 100, 'epochs': 1000, 'mutation_rate': 1.0, 'activation_fn': 'relu'})
+        params.append({'algo_name': 'gin_uncertainty_predictor', 'total_queries': search_budget,
+                       'agent': 'gin_gaussian', 'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005,
+                       'candidate_nums': 100, 'epochs': 1000, 'mutation_rate': 1.0, 'activation_fn': 'celu'})
+        params.append({'algo_name': 'gin_predictor', 'total_queries': search_budget, 'agent': 'gin_predictor',
+                       'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+                       'mutation_rate': 1.0, 'rate': 25.})
+        # params.append({'algo_name': 'gin_predictor_new', 'total_queries': search_budget, 'agent': 'gin_predictor',
+        #                'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
+        #                'mutation_rate': 1.0, 'rate': 25.})
+        params.append({'algo_name': 'oracle', 'total_queries': search_budget, 'allow_isomorphisms': False,
+                       'candidate_nums': 100, 'num_init': 10, 'k': 10, 'mutation_rate': 1.0})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'adj', 'verbose': 1})
+        params.append({'algo_name': 'gp_bayesopt', 'total_queries': search_budget, 'num_init': 10, 'k': 10,
+                       'distance': 'nasbot', 'verbose': 1})
     elif param_str == 'scalar_prior':
         params.append({'algo_name': 'gin_predictor_scalar_10', 'total_queries': search_budget, 'agent': 'gin_predictor',
                        'num_init': 10, 'allow_isomorphisms': False, 'lr': 0.005, 'candidate_nums': 100, 'epochs': 300,
@@ -197,7 +308,11 @@ def algo_params_open_domain(param_str):
     return param
 
 
-cifar10_path = '/home/albert_wei/Disk_A/dataset_train/cifar10/'
-tf_records_path = '/home/albert_wei/Disk_A/dataset_train/nas_bench101/nasbench_only108.tfrecord'
-nas_bench_201_path = '/home/albert_wei/Disk_A/dataset_train/nas_bench_201/NAS-Bench-201-v1_1-096897.pth'
-nas_bench_201_converted_path = '/home/albert_wei/Disk_A/dataset_train/nas_bench_201/arch_info.pkl'
+cifar10_path = '/home/albert_wei/fdisk_a/datasets_train/cifar10/'
+nas_bench_101_path = tf_records_path = \
+    '/home/albert_wei/fdisk_a/dataset_train_2021/nasbench_101/nasbench_only108.tfrecord'
+nas_bench_201_path = '/home/albert_wei/fdisk_a/dataset_train_2021/nasbench_201/NAS-Bench-201-v1_1-096897.pth'
+nas_bench_201_converted_base_path = '/home/albert_wei/fdisk_a/dataset_train_2021/nasbench_201_npenas/arch_info_%s.pkl'
+
+nas_bench_nlp_path = '/home/albert_wei/fdisk_a/dataset_train_2021/nasbench_nlp/'
+nas_bench_asr_path = '/home/albert_wei/fdisk_a/dataset_train_2021/nasbench_asr/'

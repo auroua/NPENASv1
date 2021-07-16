@@ -7,7 +7,6 @@ from nas_lib.data.cell_nasbench201 import Cell
 import numpy as np
 from nas_lib.utils.utils_data import find_isolate_node
 import pickle
-from nas_lib.configs import nas_bench_201_converted_path
 
 
 NUM_VERTICES = 8
@@ -69,18 +68,30 @@ def add_dummy_node(matrix_in, ops_in):
 def get_arch_acc_info(nas_bench, arch, dataname='cifar10-valid'):
     arch_index = nas_bench.query_index_by_arch(arch)
     assert arch_index >= 0, 'can not find this arch : {:}'.format(arch)
+    arch_info = nas_bench.query_by_index(arch_index, dataname)
+    if dataname == 'cifar10-valid':
+        arch_info_test = nas_bench.query_by_index(arch_index, 'cifar10')
+    else:
+        arch_info_test = arch_info
+    val_acc = []
+    test_acc = []
+    for k in arch_info:
+        val_acc.append(arch_info[k].get_eval('x-valid')['accuracy'])
+        test_acc.append(arch_info_test[k].get_eval('ori-test')['accuracy'])
     info = nas_bench.get_more_info(arch_index, dataname, None, use_12epochs_result=False, is_random=False)
-    test_acc, valid_acc, time_cost = info['test-accuracy'], info['valid-accuracy'], \
+    _, _, time_cost = info['test-accuracy'], info['valid-accuracy'], \
                                      info['train-all-time'] + info['valid-per-time']
+    valid_acc = round(float(np.mean(val_acc)), 10)
+    test_acc = round(float(np.mean(test_acc)), 4)
     return valid_acc, test_acc, time_cost
 
 
-def generate_all_archs(nas_bench):
+def generate_all_archs(nas_bench, dataset):
     total_archs = {}
     total_keys = []
     meta_archs = nas_bench.meta_archs
     for arch in meta_archs:
-        val_acc, test_acc, time_cost = get_arch_acc_info(nas_bench, arch)
+        val_acc, test_acc, time_cost = get_arch_acc_info(nas_bench, arch, dataname=dataset)
         structure = CellStructure.str2structure(arch)
         am, ops, am_dummy, ops_dummy = exchange_nodes_edges(structure)
         cell_arch = Cell(matrix=am_dummy, ops=ops_dummy, isolate_node_idxs=[])
@@ -103,14 +114,30 @@ def generate_all_archs(nas_bench):
     return total_archs, total_keys
 
 
-def inti_nasbench_201():
+def inti_nasbench_201(dataset, save_path):
     nas_bench = API(nas_bench_201_path)
-    total_archs, total_keys = generate_all_archs(nas_bench)
-    with open(nas_bench_201_converted_path, 'wb') as f:
+    total_archs, total_keys = generate_all_archs(nas_bench, dataset)
+    with open(save_path, 'wb') as f:
         pickle.dump(total_archs, f)
         pickle.dump(total_keys, f)
 
 
-# if __name__ == '__main__':
-#     save_path = '/home/albert_wei/Workspaces_dota/NPENAS/arch_info.pkl'
-#     inti_nasbench_201(save_path)
+if __name__ == '__main__':
+    # save_path = '/home/albert_wei/fdisk_a/train_output_2021/npenas/npenas_nasbench_ars_filter_none/arch_info.pkl'
+    # inti_nasbench_201('cifar10-valid', save_path)  24.2200000016, 20.89   10.8413333455   8.07
+    nas_bench = API(nas_bench_201_path)
+    # arch = '|skip_connect~0|+|skip_connect~0|skip_connect~1|+|skip_connect~0|nor_conv_1x1~1|avg_pool_3x3~2|'
+    # arch = '|skip_connect~0|+|nor_conv_1x1~0|nor_conv_1x1~1|+|nor_conv_3x3~0|skip_connect~1|avg_pool_3x3~2|'
+    arch = '|nor_conv_3x3~0|+|skip_connect~0|nor_conv_3x3~1|+|nor_conv_1x1~0|nor_conv_1x1~1|nor_conv_3x3~2|'
+    dataname = 'cifar10-valid'
+    arch_index = nas_bench.query_index_by_arch(arch)
+    arch_info = nas_bench.query_by_index(arch_index, dataname)
+    arch_info_test = nas_bench.query_by_index(arch_index, 'cifar10')
+    val_acc = []
+    test_acc = []
+    for k in arch_info:
+        val_acc.append(arch_info[k].get_eval('x-valid')['accuracy'])
+        test_acc.append(arch_info_test[k].get_eval('ori-test')['accuracy'])
+    valid_acc = round(float(np.mean(val_acc)), 10)
+    test_acc = round(float(np.mean(test_acc)), 4)
+    print(100 - valid_acc, 100 - test_acc)

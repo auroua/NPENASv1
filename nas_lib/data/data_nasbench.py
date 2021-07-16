@@ -4,6 +4,19 @@ from nas_lib.configs import tf_records_path
 from nas_lib.utils.utils_data import find_isolate_node
 from .cell import Cell
 from .cell_both import CellM
+import numpy as np
+from nas_lib.utils.utils_data import find_isolate_node, NUM_VERTICES
+import pickle
+
+
+OPS = {
+    'input': 0,
+    'conv3x3-bn-relu': 1,
+    'conv1x1-bn-relu': 2,
+    'maxpool3x3': 3,
+    'output': 4,
+    'isolate': 5
+}
 
 
 class DataNasBench:
@@ -140,7 +153,8 @@ class DataNasBench:
                        allow_isomorphisms=False,
                        patience_factor=5,
                        deterministic_loss=True,
-                       num_best_arches=10):
+                       num_best_arches=10,
+                       train=False):
         """
         Creates a set of candidate architectures with mutated and/or random architectures
         """
@@ -164,7 +178,7 @@ class DataNasBench:
                 for i in range(num):
                     mutated = self.mutate_arch(arch)
                     archtuple = self.query_arch(mutated,
-                                                train=False,
+                                                train=train,
                                                 deterministic=deterministic_loss,
                                                 encode_paths=encode_paths)
                     path_indices = self.get_path_indices(mutated)
@@ -177,7 +191,7 @@ class DataNasBench:
             for _ in range(num * patience_factor):
                 if len(candidates) >= 2 * num:
                     break
-                archtuple = self.query_arch(train=False,
+                archtuple = self.query_arch(train=train,
                                             deterministic=deterministic_loss,
                                             encode_paths=encode_paths)
                 path_indices = self.get_path_indices(archtuple[0])
@@ -334,3 +348,78 @@ class DataNasBench:
                 candidates.append(archtuple)
 
         return candidates[:num]
+
+    def get_arch_list(self,
+                      aux_file_path,
+                      distance=None,
+                      iteridx=0,
+                      num_top_arches=5,
+                      max_edits=20,
+                      num_repeats=5,
+                      random_encoding='adj',
+                      verbose=0):
+        # Method used for gp_bayesopt
+
+        # load the list of architectures chosen by bayesopt so far
+        base_arch_list = pickle.load(open(aux_file_path, 'rb'))
+        top_arches = [archtuple[0] for archtuple in base_arch_list[:num_top_arches]]
+        if verbose:
+            top_5_loss = [archtuple[1][0] for archtuple in base_arch_list[:min(5, len(base_arch_list))]]
+            print('top 5 val losses {}'.format(top_5_loss))
+
+        # perturb the best k architectures
+        dic = {}
+        for archtuple in base_arch_list:
+            matrix = archtuple[0]['matrix']
+            ops = archtuple[0]['ops']
+            if matrix.shape[0] < NUM_VERTICES:
+                matrix, ops = matrix_dummy_nodes(matrix, ops)
+            path_indices = Cell(matrix=matrix, ops=ops).get_path_indices()
+            dic[path_indices] = 1
+
+        new_arch_list = []
+        for arch in top_arches:
+            for edits in range(1, max_edits):
+                for _ in range(num_repeats):
+                    #perturbation = Cell(**arch).perturb(self.nasbench, edits)
+                    arch_mutate = Cell(**{'matrix': arch['matrix'], 'ops': arch['ops']}).mutate2(self.nasbench,
+                                                                                                 mutation_rate=edits)
+                    matrix = arch_mutate['matrix']
+                    ops = arch_mutate['ops']
+                    if matrix.shape[0] < NUM_VERTICES:
+                        matrix, ops = matrix_dummy_nodes(matrix, ops)
+
+                    path_indices = Cell(matrix=matrix, ops=ops).get_path_indices()
+                    if path_indices not in dic:
+                        dic[path_indices] = 1
+                        new_arch_list.append(arch_mutate)
+
+        # make sure new_arch_list is not empty
+        while len(new_arch_list) == 0:
+            for _ in range(100):
+                arch = Cell.random_cell(self.nasbench)
+                matrix = arch['matrix']
+                ops = arch['ops']
+                if matrix.shape[0] < NUM_VERTICES:
+                    matrix, ops = matrix_dummy_nodes(matrix, ops)
+                path_indices = Cell(matrix=matrix, ops=ops).get_path_indices()
+                if path_indices not in dic:
+                    dic[path_indices] = 1
+                    new_arch_list.append(arch)
+
+        return new_arch_list
+
+
+def matrix_dummy_nodes(matrix_in, ops_in):
+    # {2, 3, 4, 5, 6, 7}
+    matrix = np.zeros((NUM_VERTICES, NUM_VERTICES))
+    for i in range(matrix_in.shape[0]):
+        idxs = np.where(matrix_in[i] == 1)
+        for id in idxs[0]:
+            if id == matrix_in.shape[0] - 1:
+                matrix[i, 6] = 1
+            else:
+                matrix[i, id] = 1
+    ops = ops_in[:(matrix_in.shape[0] - 1)] + ['isolate'] * (7 - matrix_in.shape[0]) + ops_in[-1:]
+    find_isolate_node(matrix)
+    return matrix, ops

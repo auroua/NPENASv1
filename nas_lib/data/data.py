@@ -3,7 +3,7 @@
 from .cell import Cell
 
 
-def build_datasets(search_spaces):
+def build_datasets(search_spaces, dataset, nasbench_nlp_type, filter_none):
     if search_spaces == "nasbench_case1":
         from nas_lib.data.data_nasbench import DataNasBench
         return DataNasBench(search_spaces)
@@ -12,10 +12,20 @@ def build_datasets(search_spaces):
         return DataNasBenchNew(search_spaces)
     elif search_spaces == 'nasbench_201':
         from nas_lib.data.data_nasbench_201 import NASBench201
-        return NASBench201()
+        return NASBench201(dataset)
     elif search_spaces == 'nasbench_data_distribution':
         from nas_lib.data.data_nasbench_101_distributon_analysis import DataNasBenchDist
         return DataNasBenchDist()
+    elif search_spaces == 'nasbench_nlp':
+        from nas_lib.data.data_nasbench_nlp import DataNasBenchNLP
+        return DataNasBenchNLP(perf_type=nasbench_nlp_type)
+    elif search_spaces == 'nasbench_asr':
+        if filter_none == 'y':
+            from nas_lib.data.data_nasbench_ars_wo_none import DataNasBenchASR_WO_None
+            return DataNasBenchASR_WO_None()
+        else:
+            from nas_lib.data.data_nasbench_asr import DataNasBenchASR
+            return DataNasBenchASR()
     else:
         raise ValueError("This architecture datasets does not support!")
 

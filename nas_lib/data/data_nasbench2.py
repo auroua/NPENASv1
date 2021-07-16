@@ -1,3 +1,5 @@
+import copy
+
 from nas_lib.configs import tf_records_path
 from nasbench import api
 from nas_lib.data.cell import Cell
@@ -5,6 +7,20 @@ import numpy as np
 from nas_lib.utils.utils_data import find_isolate_node, NUM_VERTICES
 import random
 from hashlib import sha256
+import pickle
+
+
+OPS = {
+    'input': 0,
+    'conv3x3-bn-relu': 1,
+    'conv1x1-bn-relu': 2,
+    'maxpool3x3': 3,
+    'output': 4,
+    'isolate': 5
+}
+
+OPS_LIST_NEW = []
+OPS_LIST = ['input', 'conv3x3-bn-relu', 'conv1x1-bn-relu', 'maxpool3x3', 'output', 'isolate']
 
 
 class DataNasBenchNew:
@@ -50,13 +66,17 @@ class DataNasBenchNew:
                        allow_isomorphisms=False,
                        patience_factor=5,
                        deterministic_loss=True,
-                       num_best_arches=10):
+                       num_best_arches=10,
+                       return_dist=False):
         """
         Creates a set of candidate architectures with mutated and/or random architectures
         """
         # test for isomorphisms using a hash map of path indices
         candidates = []
         dic = {}
+        dist_list = []
+        nums_list = []
+        mutated_archs_list = []
         for d in data:
             arch = {'matrix': d[0][0], 'ops': d[0][1]}
             path_indices = self.get_path_indices(arch)
@@ -67,22 +87,31 @@ class DataNasBenchNew:
             # mutate architectures with the lowest validation error
             best_arches = [{'matrix': arch[1], 'ops': arch[2]}
                            for arch in sorted(data, key=lambda i: i[4])[:num_best_arches * patience_factor]]
+            best_arch_datas = [d for d in sorted(data, key=lambda i: i[4])[:num_best_arches * patience_factor]]
             # stop when candidates is size num
             # use patience_factor instead of a while loop to avoid long or infinite runtime
             for idx, arch in enumerate(best_arches):
                 if len(candidates) >= num:
                     break
+                nums = 0
                 mutate_arch_dict[idx] = 0
                 for i in range(num):
                     mutated = self.mutate_arch(arch, encode_paths, require_distance=True)
                     path_indices = self.get_path_indices({'matrix': mutated[0][0],
                                                           'ops': mutated[0][1]})
-
                     if allow_isomorphisms or path_indices not in dic:
                         dic[path_indices] = 1
                         candidates.append(mutated)
                         mutate_arch_dict[idx] += 1
-        return candidates[:num]
+                        dist = adj_distance(arch, {'matrix': mutated[1], 'ops': mutated[2]})
+                        dist_list.append(dist)
+                        nums += 1
+                nums_list.append(nums)
+                mutated_archs_list.append(best_arch_datas[idx])
+        if return_dist:
+            return candidates[:num], dist_list[:num], 0, nums_list, mutated_archs_list
+        else:
+            return candidates[:num]
 
     def get_path_indices(self, arch):
         return Cell(**arch).get_path_indices()
@@ -308,3 +337,127 @@ class DataNasBenchNew:
             else:
                 unduplicated.append(candidate)
         return unduplicated
+
+    def get_arch_list(self,
+                      aux_file_path,
+                      distance=None,
+                      iteridx=0,
+                      num_top_arches=5,
+                      max_edits=20,
+                      num_repeats=5,
+                      random_encoding='adj',
+                      verbose=0):
+        # Method used for gp_bayesopt
+
+        # load the list of architectures chosen by bayesopt so far
+        base_arch_list = pickle.load(open(aux_file_path, 'rb'))
+        top_arches = [archtuple[0] for archtuple in base_arch_list[:num_top_arches]]
+        if verbose:
+            top_5_loss = [archtuple[1][0] for archtuple in base_arch_list[:min(5, len(base_arch_list))]]
+            print('top 5 val losses {}'.format(top_5_loss))
+
+        # perturb the best k architectures
+        dic = {}
+        for archtuple in base_arch_list:
+            matrix = archtuple[0]['matrix']
+            ops = archtuple[0]['ops']
+            if matrix.shape[0] < NUM_VERTICES:
+                matrix, ops = matrix_dummy_nodes(matrix, ops)
+            path_indices = Cell(matrix=matrix, ops=ops).get_path_indices()
+            dic[path_indices] = 1
+
+        new_arch_list = []
+        for arch in top_arches:
+            for edits in range(1, max_edits):
+                for _ in range(num_repeats):
+                    #perturbation = Cell(**arch).perturb(self.nasbench, edits)
+                    arch_mutate = Cell(**{'matrix': arch['matrix'], 'ops': arch['ops']}).mutate2(self.nasbench,
+                                                                                                 mutation_rate=edits)
+                    matrix = arch_mutate['matrix']
+                    ops = arch_mutate['ops']
+                    if matrix.shape[0] < NUM_VERTICES:
+                        matrix, ops = matrix_dummy_nodes(matrix, ops)
+
+                    path_indices = Cell(matrix=matrix, ops=ops).get_path_indices()
+                    if path_indices not in dic:
+                        dic[path_indices] = 1
+                        new_arch_list.append(arch_mutate)
+
+        # make sure new_arch_list is not empty
+        while len(new_arch_list) == 0:
+            for _ in range(100):
+                arch = Cell.random_cell(self.nasbench)
+                matrix = arch['matrix']
+                ops = arch['ops']
+                if matrix.shape[0] < NUM_VERTICES:
+                    matrix, ops = matrix_dummy_nodes(matrix, ops)
+                path_indices = Cell(matrix=matrix, ops=ops).get_path_indices()
+                if path_indices not in dic:
+                    dic[path_indices] = 1
+                    new_arch_list.append(arch)
+
+        return new_arch_list
+
+    @classmethod
+    def generate_distance_matrix(cls, arches_1, arches_2, distance):
+        matrix = np.zeros([len(arches_1), len(arches_2)])
+        for i, arch_1 in enumerate(arches_1):
+            for j, arch_2 in enumerate(arches_2):
+                if distance == 'adj':
+                    matrix[i][j] = adj_distance(arch_1, arch_2)
+                elif distance == 'nasbot':
+                    matrix[i][j] = nasbot_distance(arch_1, arch_2)
+                else:
+                    raise ValueError(f'Distance {distance} does not support at present!')
+        return matrix
+
+
+def matrix_dummy_nodes(matrix_in, ops_in):
+        # {2, 3, 4, 5, 6, 7}
+        matrix = np.zeros((NUM_VERTICES, NUM_VERTICES))
+        for i in range(matrix_in.shape[0]):
+            idxs = np.where(matrix_in[i] == 1)
+            for id in idxs[0]:
+                if id == matrix_in.shape[0] - 1:
+                    matrix[i, 6] = 1
+                else:
+                    matrix[i, id] = 1
+        ops = ops_in[:(matrix_in.shape[0]-1)] + ['isolate'] * (7-matrix_in.shape[0]) + ops_in[-1:]
+        find_isolate_node(matrix)
+        return matrix, ops
+
+
+def adj_distance(cell_1, cell_2):
+    """
+    compute the distance between two architectures
+    by comparing their adjacency matrices and op lists
+    (edit distance)
+    """
+    c1_matrix, c1_ops = matrix_dummy_nodes(cell_1['matrix'], cell_1['ops'])
+    c2_matrix, c2_ops = matrix_dummy_nodes(cell_2['matrix'], cell_2['ops'])
+
+    graph_dist = np.sum(c1_matrix != c2_matrix)
+    ops_dist = np.sum(c1_ops != c2_ops)
+    return graph_dist + ops_dist
+
+
+def nasbot_distance(cell_1, cell_2):
+#     # distance based on optimal transport between row sums, column sums, and ops
+    c1_matrix, c1_ops = matrix_dummy_nodes(cell_1['matrix'], cell_1['ops'])
+    c2_matrix, c2_ops = matrix_dummy_nodes(cell_2['matrix'], cell_2['ops'])
+
+    cell_1_row_sums = sorted(c1_matrix.sum(axis=0))
+    cell_1_col_sums = sorted(c1_matrix.sum(axis=1))
+
+    cell_2_row_sums = sorted(c2_matrix.sum(axis=0))
+    cell_2_col_sums = sorted(c2_matrix.sum(axis=1))
+
+    row_dist = np.sum(np.abs(np.subtract(cell_1_row_sums, cell_2_row_sums)))
+    col_dist = np.sum(np.abs(np.subtract(cell_1_col_sums, cell_2_col_sums)))
+
+    cell_1_counts = [c1_ops.count(op) for op in OPS]
+    cell_2_counts = [c2_ops.count(op) for op in OPS]
+
+    ops_dist = np.sum(np.abs(np.subtract(cell_1_counts, cell_2_counts)))
+
+    return row_dist + col_dist + ops_dist

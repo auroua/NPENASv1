@@ -253,6 +253,7 @@ class Cell:
             ops_idx = [-1] + [OPS.index(new_ops[idx]) for idx in range(1, len(new_ops)-1)] + [-2]
             iteration += 1
             if iteration == 500:
+            # if iteration == 100:
                 ops_idx = [-1] + [OPS.index(self.ops[idx]) for idx in range(1, len(self.ops) - 1)] + [-2]
                 return {
                     'matrix': copy.deepcopy(self.matrix),
