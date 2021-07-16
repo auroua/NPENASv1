@@ -56,7 +56,7 @@ python tools_close_domain/visualize_results.py --search_space nasbench_101 --dra
 **Visualize the results of comparing algorithms on NAS-Bench-101 search space via using the new sampling pipeline.**
 
 <p align="center">
-  <img width="576" height="432" src="/images/NASBench-101.png">
+  <img width="576" height="432" src="/images/NASBench-101.jpg">
 </p>
 
 ###### NASBench-201 Dataset 
