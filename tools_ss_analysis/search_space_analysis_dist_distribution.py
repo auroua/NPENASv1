@@ -2,20 +2,19 @@ import os
 import matplotlib.pyplot as plt
 import argparse
 from tools_ss_analysis.search_space_analysis import get_all_data
-from nas_lib.utils.corr import get_kendalltau_coorlection
 import numpy as np
 from collections import Counter
 
 
 search_space_cifar10 = 'nasbench_201_cifar10-valid.pkl'
-search_space_nlp = 'nasbench_nlp_last.pkl'
-search_space_asr = 'nasbench_asr_y.pkl'
+search_space_nlp = 'nasbench_nlp.pkl'
+search_space_asr = 'nasbench_asr.pkl'
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Args for visualize darts architecture')
     parser.add_argument('--base_path', type=str,
-                        default='/home/albert_wei/fdisk_a/train_output_2021/npenas/search_space_analysis/',
+                        default='/media/albert_wei/HP_SSD/Backups/Papers_Backup#####/npenas/backups_npenas_paper_2021_7_14/result_files/search_space_analysis/',
                         help='The folder of search space files.')
     args = parser.parse_args()
 

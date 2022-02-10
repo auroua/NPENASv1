@@ -11,7 +11,10 @@ dataset_keys = ['Random', 'REA', 'BANANAS', 'BANANAS_F', 'NPENAS-BO', 'NPENAS-NP
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Args for visualize darts architecture')
     parser.add_argument('--file_path', type=str,
-                        default='/home/albert_wei/fdisk_a/train_output_2021/npenas/final_results/npenas_results_pkl/nasbench_201_imagenet_gp.pkl',
+                        default='/home/albert_wei/Desktop/results/npenas_results_pkl/nasbench_201_imagenet_gp.pkl',
+                        help='The folder of search space files.')
+    parser.add_argument('--algo', type=str,
+                        default='NPENAS-NP',   # NPENAS-BO, NPENAS-NP
                         help='The folder of search space files.')
     args = parser.parse_args()
 
@@ -27,7 +30,12 @@ if __name__ == '__main__':
     # gp_nasbot = dataset['GP-NASBOT']
 
     algo_1 = bananas
-    algo_2 = npenas_np
+    if args.algo == "NPENAS-BO":
+        algo_2 = npenas_bo
+    elif args.algo == "NPENAS-NP":
+        algo_2 = npenas_np
+    else:
+        raise ValueError(f"args algo does not support {args.algo}")
 
     mean_1 = np.mean(algo_1, axis=0)
     mean_2 = np.mean(algo_2, axis=0)

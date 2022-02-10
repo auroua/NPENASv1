@@ -8,8 +8,8 @@ search_space_nasbench_101 = 'nasbench_101.pkl'
 search_space_cifar10 = 'nasbench_201_cifar10-valid.pkl'
 search_space_cifar100 = 'nasbench_201_cifar100.pkl'
 search_space_imagenet = 'nasbench_201_ImageNet16-120.pkl'
-search_space_nlp = 'nasbench_nlp_last.pkl'
-search_space_asr = 'nasbench_asr_y.pkl'
+search_space_nlp = 'nasbench_nlp.pkl'
+search_space_asr = 'nasbench_asr.pkl'
 
 
 if __name__ == '__main__':
@@ -18,7 +18,7 @@ if __name__ == '__main__':
                         choices=['nasbench_nlp', 'others'],
                         help='The search space.')
     parser.add_argument('--base_path', type=str,
-                        default='/home/albert_wei/fdisk_a/train_output_2021/npenas/search_space_analysis/',
+                        default='/media/albert_wei/HP_SSD/Backups/Papers_Backup#####/npenas/backups_npenas_paper_2021_7_14/result_files/search_space_analysis/',
                         help='The folder of search space files.')
     args = parser.parse_args()
 

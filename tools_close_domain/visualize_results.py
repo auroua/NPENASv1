@@ -7,21 +7,21 @@ from nas_lib.visualize.visualize_close_domain_reverse import draw_plot_nasbench_
 
 
 model_lists_nasbench = ['Random', 'REA', 'BO w. GP', 'NASBOT', 'BANANAS-PE', 'BANANAS-AE', 'NPENAS-BO', 'NPENAS-NP',
-                        'NPENAS-NP-FST', 'NPENAS-GT']
-model_masks_nasbench = [True, True, True, True, True, True, True, True, False, True]
+                        'NPENAS-GT']
+model_masks_nasbench = [True, True, True, True, True, True, True, True, True]
 
 model_lists_scalar = ['scalar_10', 'scalar_30', 'scalar_50', 'scalar_70', 'scalar_100']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Args for visualize darts architecture')
-    parser.add_argument('--search_space', type=str, default='nasbench_nlp',
+    parser.add_argument('--search_space', type=str, default='nasbench_asr',
                         choices=['nasbench_101', 'nasbench_201', 'scalar_prior', 'evaluation_compare',
                                  'nasbench_nlp', 'nasbench_asr'],
                         help='The algorithm output folder')
     parser.add_argument('--save_dir', type=str,
-                        default='/home/albert_wei/Desktop/upload_files/npenas_nasbench_nlp/',
+                        default='/media/albert_wei/HP_SSD/Backups/Papers_Backup#####/npenas/backups_npenas_paper_2021_7_14/result_files/npenas_results/npenas_nasbench_asr/',
                         help='The algorithm output folder')
-    parser.add_argument('--train_data', type=str, default='cifar100',
+    parser.add_argument('--train_data', type=str, default='ImageNet16-120',
                         choices=['cifar10-valid', 'cifar100', 'ImageNet16-120'],
                         help='The evaluation of dataset of NASBench-201.')
     parser.add_argument('--draw_type', type=str, default='MEANERROR', choices=['ERRORBAR', 'MEANERROR'],

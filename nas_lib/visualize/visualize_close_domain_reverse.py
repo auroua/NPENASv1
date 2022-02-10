@@ -1,3 +1,4 @@
+import copy
 import os
 import pickle
 import numpy as np
@@ -100,6 +101,8 @@ def convert2np_2(root_path, model_lists, end=None):
             for m in model_lists:
                 total_dicts[m].append(nested_dicts[m])
     results_np = {m: np.array(total_dicts[m]) for m in model_lists}
+    if "rate" in algorithm_params[0]:
+        results_np["rate"] = [algorithm_params[0]["rate"], algorithm_params[1]["rate"]]
     return results_np
 
 
@@ -224,11 +227,30 @@ def draw_plot_nasbench_101_diff_training(root_path, model_lists, model_masks, se
 
 
 def draw_plot_nasbench_201(root_path, model_lists, model_masks, train_data='cifar100', draw_type='ERRORBAR',
-                           verbose=1, order=True):
+                           verbose=1, order=True, comparison_type="Default"):
     # draw_type  ERRORBAR, MEANERROR
-    # np_datas_dict = convert2np(root_path, end=None, model_lists=model_lists)
-    np_datas_dict = convert2np_2(root_path, model_lists=model_lists, end=None)
+    if order:
+        np_datas_dict = convert2np(root_path, end=None, model_lists=model_lists)
+    else:
+        np_datas_dict = convert2np_2(root_path, model_lists=model_lists, end=None)
+    if "rate" in np_datas_dict:
+        rate_val = np_datas_dict.pop("rate")
     np_mean_dict = getmean(np_datas_dict, model_lists=model_lists)
+    # np_mean_dict_temp =copy.deepcopy(np_mean_dict)
+    if comparison_type == "scale_factor":
+        key1 = "SCALING FACTOR=" + str(int(rate_val[0]))
+        key2 = "SCALING FACTOR=" + str(int(rate_val[1]))
+        np_mean_dict[key1] = np_mean_dict["SCALING FACTOR=#"]
+        np_mean_dict[key2] = np_mean_dict["SCALING FACTOR=*"]
+        np_mean_dict.pop("SCALING FACTOR=#")
+        np_mean_dict.pop("SCALING FACTOR=*")
+        model_lists = [key1, key2, "NPENAS-GT"]
+
+        np_datas_dict[key1] = np_datas_dict["SCALING FACTOR=#"]
+        np_datas_dict[key2] = np_datas_dict["SCALING FACTOR=*"]
+        np_datas_dict.pop("SCALING FACTOR=#")
+        np_datas_dict.pop("SCALING FACTOR=*")
+
     np_quantile_30 = get_quantile(np_datas_dict, model_lists=model_lists, divider=30)
     np_quantile_70 = get_quantile(np_datas_dict, model_lists=model_lists, divider=70)
 
@@ -248,6 +270,7 @@ def draw_plot_nasbench_201(root_path, model_lists, model_masks, train_data='cifa
     fig, ax = plt.subplots(1)
     upperlimits = [True] * 10
     lowerlimits = [True] * 10
+
     if draw_type == 'ERRORBAR':
         for j, m in enumerate(model_lists):
             if model_masks[j]:
@@ -271,6 +294,7 @@ def draw_plot_nasbench_201(root_path, model_lists, model_masks, train_data='cifa
     else:
         raise ValueError(f'Train data type {train_data} does not support!')
 
+
     # ax.grid(True)
     fig.set_dpi(600.0)
     ax.set_xlabel('Number of Samples')
@@ -280,12 +304,30 @@ def draw_plot_nasbench_201(root_path, model_lists, model_masks, train_data='cifa
     plt.show()
 
 
-def draw_plot_nasbench_nlp(root_path, model_lists, model_masks, draw_type='ERRORBAR', verbose=1, order=True):
+def draw_plot_nasbench_nlp(root_path, model_lists, model_masks, draw_type='ERRORBAR', verbose=1, order=True,
+                           comparison_type="Default"):
     # draw_type  ERRORBAR, MEANERROR
     if order:
         np_datas_dict = convert2np(root_path, end=None, model_lists=model_lists)
     else:
         np_datas_dict = convert2np_2(root_path, end=None, model_lists=model_lists)
+    if "rate" in np_datas_dict:
+        rate_val = np_datas_dict.pop("rate")
+
+    np_mean_dict = getmean(np_datas_dict, model_lists=model_lists)
+    if comparison_type == "scale_factor":
+        key1 = "SCALING FACTOR=" + str(int(rate_val[0]))
+        key2 = "SCALING FACTOR=" + str(int(rate_val[1]))
+        np_mean_dict[key1] = np_mean_dict["SCALING FACTOR=#"]
+        np_mean_dict[key2] = np_mean_dict["SCALING FACTOR=*"]
+        np_mean_dict.pop("SCALING FACTOR=#")
+        np_mean_dict.pop("SCALING FACTOR=*")
+        model_lists = [key1, key2, "NPENAS-GT"]
+
+        np_datas_dict[key1] = np_datas_dict["SCALING FACTOR=#"]
+        np_datas_dict[key2] = np_datas_dict["SCALING FACTOR=*"]
+        np_datas_dict.pop("SCALING FACTOR=#")
+        np_datas_dict.pop("SCALING FACTOR=*")
     np_mean_dict = getmean(np_datas_dict, model_lists=model_lists)
     np_quantile_30 = get_quantile(np_datas_dict, model_lists=model_lists, divider=30)
     np_quantile_70 = get_quantile(np_datas_dict, model_lists=model_lists, divider=70)
@@ -329,13 +371,32 @@ def draw_plot_nasbench_nlp(root_path, model_lists, model_masks, draw_type='ERROR
     plt.show()
 
 
-def draw_plot_nasbench_asr(root_path, model_lists, model_masks, draw_type='ERRORBAR', verbose=1, order=True):
+def draw_plot_nasbench_asr(root_path, model_lists, model_masks, draw_type='ERRORBAR', verbose=1, order=True,
+                           comparison_type="Default"):
     # draw_type  ERRORBAR, MEANERROR
     if order:
         np_datas_dict = convert2np(root_path, end=None, model_lists=model_lists)
     else:
         np_datas_dict = convert2np_2(root_path, end=None, model_lists=model_lists)
+
+    if "rate" in np_datas_dict:
+        rate_val = np_datas_dict.pop("rate")
+
     np_mean_dict = getmean(np_datas_dict, model_lists=model_lists)
+    if comparison_type == "scale_factor":
+        key1 = "SCALING FACTOR=" + str(int(rate_val[0]))
+        key2 = "SCALING FACTOR=" + str(int(rate_val[1]))
+        np_mean_dict[key1] = np_mean_dict["SCALING FACTOR=#"]
+        np_mean_dict[key2] = np_mean_dict["SCALING FACTOR=*"]
+        np_mean_dict.pop("SCALING FACTOR=#")
+        np_mean_dict.pop("SCALING FACTOR=*")
+        model_lists = [key1, key2, "NPENAS-GT"]
+
+        np_datas_dict[key1] = np_datas_dict["SCALING FACTOR=#"]
+        np_datas_dict[key2] = np_datas_dict["SCALING FACTOR=*"]
+        np_datas_dict.pop("SCALING FACTOR=#")
+        np_datas_dict.pop("SCALING FACTOR=*")
+
     np_quantile_30 = get_quantile(np_datas_dict, model_lists=model_lists, divider=30)
     np_quantile_70 = get_quantile(np_datas_dict, model_lists=model_lists, divider=70)
 
@@ -424,7 +485,9 @@ def draw_plot_priori_scalar(root_path, model_lists, model_masks, draw_type='ERRO
 
 def draw_plot_evaluation_compare(root_path, model_lists, model_masks, draw_type='ERRORBAR', verbose=1):
     # draw_type  ERRORBAR, MEANERROR
-    np_datas_dict = convert2np(root_path, end=None, model_lists=model_lists)
+    model_lists = ["1", "10", "20", "30"]
+    # np_datas_dict = convert2np(root_path, end=None, model_lists=model_lists)
+    np_datas_dict = convert2np_2(root_path, end=None, model_lists=model_lists)
     np_mean_dict = getmean(np_datas_dict, model_lists=model_lists)
     np_quantile_30 = get_quantile(np_datas_dict, model_lists=model_lists, divider=30)
     np_quantile_70 = get_quantile(np_datas_dict, model_lists=model_lists, divider=70)
@@ -458,8 +521,9 @@ def draw_plot_evaluation_compare(root_path, model_lists, model_masks, draw_type=
     ax.set_yticks(np.arange(5.7, 6.9, 0.2))
     # ax.grid(True)
     fig.set_dpi(600.0)
-    ax.set_xlabel('Number of Architectures in the Pool', fontsize=12)
-    ax.set_ylabel('Test Error of Best Architecture (%)', fontsize=12)
+    ax.set_xlabel('Number of Samples', fontsize=12)
+    # ax.set_ylabel('Test Error of Best Architecture (%)', fontsize=12)
+    ax.set_ylabel('Test Error [%] of Best Neural Net', fontsize=12)
     plt.legend(loc='upper right', fontsize=12)
     # plt.grid(b=True, which='major', color='#666699', linestyle='--')
     plt.show()

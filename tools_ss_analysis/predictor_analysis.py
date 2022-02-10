@@ -17,16 +17,20 @@ from nas_lib.data.data_nasbench_nlp import adj_distance as adj_dist_nlp
 # model_lists_nasbench = ['Random', 'REA', 'BANANAS', 'NPENAS-NP', 'ORACLE']
 # model_masks_nasbench = [True, True, True, True, True]
 
-model_lists_nasbench = ['NPENAS-NP-10', 'NPENAS-NP-100', 'ORACLE']
+# model_lists_nasbench = ['NPENAS-NP-10', 'NPENAS-NP-100', 'ORACLE']
+# model_masks_nasbench = [True, True, False]
+
+model_lists_nasbench = ['RELU', 'CELU', 'NPENAS-GT']
 model_masks_nasbench = [True, True, False]
+
 
 # model_lists_nasbench = ['NPENAS-NP-10']
 # model_masks_nasbench = [True]
 
 options = {"node_size": 25, "alpha": 0.8}
 
-# predictor_values = {0: 'RELU', 1: 'CELU'}
-predictor_values = {0: 'SCALING FACTOR=10', 1: 'SCALING FACTOR=100'}
+predictor_values = {0: 'RELU', 1: 'CELU'}
+# predictor_values = {0: 'SCALING FACTOR=10', 1: 'SCALING FACTOR=100'}
 
 
 def get_kt_list(all_files):
@@ -169,16 +173,43 @@ def draw_graph(parent, child_list, p_key_list, c_key_list, p_key_dict, c_key_dic
         c_performance_list.append(c[4])
 
 
-def visual_kt_list(kt_results, results_folder, search_space):
+def visual_kt_list(kt_results, results_folder, search_space, comparison_type="relu_celu", train_dataset="cifar100"):
+    if comparison_type == "relu_celu":
+        model_lists_nasbench = ['RELU', 'CELU', 'NPENAS-GT']
+        model_masks_nasbench = [True, True, False]
+    elif comparison_type == "scale_factor":
+        model_lists_nasbench = ['SCALING FACTOR=#', 'SCALING FACTOR=*', 'NPENAS-GT']
+        model_masks_nasbench = [True, True, False]
+    else:
+        raise ValueError(f"comparison type {comparison_type} does not support at present!")
+    if comparison_type == "scale_factor":
+        rate = get_rate(results_folder)
+        key1 = "SCALING FACTOR=" + str(int(rate[0]))
+        key2 = "SCALING FACTOR=" + str(int(rate[1]))
     kt_results_dict = {}
     kt_results_std_dict = {}
+
     for k, v in kt_results.items():
         np_v = np.nan_to_num(np.array(v))
         kt_results_dict[k] = np.mean(np_v, axis=0)
         kt_results_std_dict[k] = np.std(np_v, axis=0)
 
-    # idx = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90])
-    idx = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140])
+    if comparison_type == "scale_factor":
+        kt_results_dict[key1] = kt_results_dict["0"]
+        kt_results_dict[key2] = kt_results_dict["1"]
+        kt_results_dict.pop("0")
+        kt_results_dict.pop("1")
+
+    if comparison_type == "relu_celu":
+        kt_results_dict["RELU"] = kt_results_dict["0"]
+        kt_results_dict["CELU"] = kt_results_dict["1"]
+        kt_results_dict.pop("0")
+        kt_results_dict.pop("1")
+
+    if args.search_space == "nasbench_101":
+        idx = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140])
+    else:
+        idx = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90])
     fig, ax = plt.subplots(1)
     for k, v in kt_results_dict.items():
         plt.plot(idx, v, label=k, marker='s', linewidth=1, ms=3)
@@ -191,32 +222,54 @@ def visual_kt_list(kt_results, results_folder, search_space):
     plt.show()
     if search_space == 'nasbench_nlp':
         draw_plot_nasbench_nlp(results_folder, draw_type='ERRORBAR', model_lists=model_lists_nasbench,
-                               model_masks=model_masks_nasbench)
+                               model_masks=model_masks_nasbench, order=False, comparison_type=comparison_type)
     elif search_space == 'nasbench_asr':
         draw_plot_nasbench_asr(results_folder, draw_type='ERRORBAR', model_lists=model_lists_nasbench,
-                               model_masks=model_masks_nasbench)
+                               model_masks=model_masks_nasbench, order=False, comparison_type=comparison_type)
     elif search_space == 'nasbench_201':
         # cifar10-valid, cifar100, ImageNet16-120
         draw_plot_nasbench_201(results_folder, draw_type='ERRORBAR', model_lists=model_lists_nasbench,
-                               model_masks=model_masks_nasbench, train_data='ImageNet16-120')
+                               model_masks=model_masks_nasbench, train_data=train_dataset, order=False,
+                               comparison_type=comparison_type)
     elif search_space == 'nasbench_101':
         pass
 
 
+def get_rate(folder):
+    files = os.listdir(folder)
+    file_name = ""
+    for f in files:
+        if "full" not in f and "log" not in f:
+            file_name = f
+            break
+    file_path = os.path.join(folder, file_name)
+    with open(file_path, "rb") as fs:
+        algorithm_params, metann_params, results, walltimes = pickle.load(fs)
+    rate = [algorithm_params[0]["rate"], algorithm_params[1]["rate"]]
+    return rate
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Args for visualize darts architecture')
-    parser.add_argument('--search_space', type=str, default='nasbench_101',
+    parser.add_argument('--search_space', type=str, default='nasbench_201',
                         choices=['nasbench_101', 'nasbench_201', 'nasbench_nlp', 'nasbench_asr'],
                         help='The algorithm output folder')
-    parser.add_argument('--save_dir', type=str,
-                        default='/home/albert_wei/fdisk_a/train_output_2021/npenas/final_results/npenas_results/npenas_nasbench_101/',
+    parser.add_argument('--comparison_type', type=str, default='relu_celu',
+                        choices=['scale_factor', 'relu_celu'],
                         help='The algorithm output folder')
+    parser.add_argument('--save_dir', type=str,
+                        default='/home/albert_wei/Desktop/results/relu_celu/npenas_nasbench_201_cifar10_relu_celu/',
+                        help='The algorithm output folder')
+    parser.add_argument('--train_data', type=str, default='cifar10-valid',
+                        choices=['cifar10-valid', 'cifar100', 'ImageNet16-120'],
+                        help='The evaluation of dataset of NASBench-201.')
     args = parser.parse_args()
 
     all_files = [os.path.join(args.save_dir, f) for f in os.listdir(args.save_dir) if 'full' in f]
     kt_total_results, kt_total_top_results = get_kt_list(all_files)
-    # visual_kt_list(kt_total_results, args.save_dir, args.search_space)
+    visual_kt_list(kt_total_results, args.save_dir, args.search_space, comparison_type=args.comparison_type,
+                   train_dataset=args.train_data)
     # visual_kt_list(kt_total_top_results, args.save_dir, args.search_space)
 
-    mutate_rea_information(all_files)
+    # mutate_rea_information(all_files)
     # mutate_information(all_files)
