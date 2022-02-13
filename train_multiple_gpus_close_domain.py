@@ -69,7 +69,10 @@ def data_consumers(args, q, save_dir, i, search_space):
 def run_experiments_bananas_paradigm(args, save_dir, i, iterations, logger, search_space):
     out_file = args.output_filename + '_gpus_%d_' % i + 'iter_%d' % iterations
     metann_params = meta_neuralnet_params(args.search_space)
-    algorithm_params = algo_params(args.algo_params, args.search_budget)
+    algorithm_params = algo_params(args.algo_params, args.search_budget,
+                                   comparison_type=args.comparison_type,
+                                   nasbench_201_dataset=args.dataset,
+                                   relu_celu_comparison_algo_type=args.relu_celu_comparison_algo_type)
     num_algos = len(algorithm_params)
     results = []
     full_data_results = []
@@ -155,7 +158,7 @@ def run_experiments_bananas_paradigm(args, save_dir, i, iterations, logger, sear
             pickle.dump([algorithm_params, metann_params, results, result_dist, walltimes], f)
         else:
             pickle.dump([algorithm_params, metann_params, results, walltimes], f)
-    if len(full_data_results) > 0:
+    if len(full_data_results) > 0 and args.record_full_data == "T":
         with open(filename_full_data, 'wb') as f:
             pickle.dump([algorithm_params, metann_params, full_data_results, walltimes], f)
     logger.info('#######################################################  Trails %d End  '
@@ -185,7 +188,13 @@ if __name__ == "__main__":
                                  'evaluation_compare', 'box_compare_case1', 'box_compare_case2', 'experiment',
                                  'nasbench_nlp', 'nasbench_asr'],
                         help='which algorithms to compare')
-    parser.add_argument('--dataset', type=str, default='cifar10-valid',
+    parser.add_argument('--comparison_type', type=str, default='algorithm',
+                        choices=['algorithm', 'scalar_compare', 'relu_celu'],
+                        help='which algorithms to compare')
+    parser.add_argument('--relu_celu_comparison_algo_type', type=str, default='NPENAS_NP',
+                        choices=['NPENAS_BO', 'NPENAS_NP'],
+                        help='which algorithms to compare')
+    parser.add_argument('--dataset', type=str, default='ImageNet16-120',
                         choices=['cifar10-valid', 'cifar100', 'ImageNet16-120'], help='dataset name of nasbench-201.')
     parser.add_argument('--output_filename', type=str, default=random_id(64), help='name of output files')
     parser.add_argument('--nasbench_nlp_type', type=str,
@@ -194,13 +203,14 @@ if __name__ == "__main__":
     parser.add_argument('--filter_none', type=str,
                         default='y', choices=['y', 'n'],
                         help='name of output files')
-    parser.add_argument('--gpus', type=int, default=2, help='The num of gpus used for search.')
+    parser.add_argument('--gpus', type=int, default=1, help='The num of gpus used for search.')
     parser.add_argument('--loss_type', type=str, default="mae", help='Loss used to train architecture.')
     parser.add_argument('--with_details', type=str, default="F", help='Record detailed training procedure.')
-    parser.add_argument('--record_kt', type=str, default="T", help='Record kendall tau corr.')
-    parser.add_argument('--record_mutation', type=str, default="T", help='Record architecture mutation information.')
+    parser.add_argument('--record_kt', type=str, default="F", help='Record kendall tau corr.')
+    parser.add_argument('--record_mutation', type=str, default="F", help='Record architecture mutation information.')
+    parser.add_argument('--record_full_data', type=str, default="F", help='Record detailed information.')
     parser.add_argument('--save_dir', type=str,
-                        default='/home/albert_wei/fdisk_a/train_output_2021/npenas/nasbench_nlp_mutation_strategies/',
+                        default='/home/albert_wei/Disk_A/train_output_2021/npenas_mutation_test/',
                         help='output directory')
 
     args = parser.parse_args()

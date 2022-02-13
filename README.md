@@ -41,13 +41,13 @@ cd NPENASv1
 ```bash
 # gpus: the number of gpus used to execute searching.
 # save_dir: the output path.
-python train_multiple_gpus_close_domain.py --trials 600 --search_budget 150 --search_space nasbench_case1 --algo_params nasbench101_case1 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_case1/
+python train_multiple_gpus_close_domain.py --trials 600 --search_budget 150 --search_space nasbench_case1 --algo_params nasbench101_case1 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_101/ --comparison_type algorithm --record_full_data F
 ```  
 4. You can test the new sampling pipeline via running the following command. *Change the `save_dir` to your directory before running.*
 ```bash
 # gpus: the number of gpus used to execute searching.
 # save_dir: the output path.
-python train_multiple_gpus_close_domain.py --trials 600 --search_budget 150 --search_space nasbench_case2 --algo_params nasbench101_case2 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_case2/
+python train_multiple_gpus_close_domain.py --trials 600 --search_budget 150 --search_space nasbench_case2 --algo_params nasbench101_case2 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_101/ --comparison_type algorithm --record_full_data F
 ``` 
 5. Run the following command to visualize the comparison of algorithms. *Change the `save_dir` to the path of `save_dir` in step 3 or 4.*
 ```bash
@@ -58,6 +58,17 @@ python tools_close_domain/visualize_results.py --search_space nasbench_101 --dra
 <p align="center">
   <img width="576" height="432" src="/images/NASBench-101.jpg">
 </p>
+
+6. Scaling Factor Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 150 --search_space nasbench_case2 --algo_params nasbench101_case2 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_101/ --comparison_type scalar_compare --record_full_data T --record_kt T 
+```
+
+7. ReLU CELU Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 150 --search_space nasbench_case2 --algo_params nasbench101_case2 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_101/ --comparison_type relu_celu --record_full_data T --record_kt T --relu_celu_comparison_algo_type NPENAS_NP
+```
+
 
 ###### NASBench-201 Dataset 
 We only compared algorithms using the new sampling pipeline on the NASBench-201 dataset. 
@@ -75,12 +86,68 @@ python tools_close_domain/train_init_dataset.py --dataset cifar10-valid
 ```bash
 # gpus: the number of gpus used to execute searching.
 # save_dir: the output path.
-python train_multiple_gpus_close_domain.py --trials 600 --search_budget 100 --search_space nasbench_201 --algo_params nasbench_201 --gpus 1 --multiprocessing-distributed False --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/
+python train_multiple_gpus_close_domain.py --trials 600 --search_budget 100 --search_space nasbench_201 --algo_params nasbench_201 --gpus 1 --multiprocessing-distributed False --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/ --comparison_type algorithm --record_full_data F --dataset cifar100
 ``` 
 
 7. Run the following command to visualize the comparison of algorithms. *Change the `save_dir` to the path of `save_dir` in step 6.*
 ```bash
 python tools_close_domain/visualize_results.py --search_space nasbench_201 --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/ --draw_type ERRORBAR
+```
+
+8. Scaling Factor Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 100 --search_space nasbench_201 --algo_params nasbench_201 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_201/ --comparison_type scalar_compare --record_full_data T --record_kt T --dataset cifar100
+```
+
+9. ReLU CELU Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 100 --search_space nasbench_201 --algo_params nasbench_201 --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_201/ --comparison_type relu_celu --record_full_data T --record_kt T --relu_celu_comparison_algo_type NPENAS_NP --dataset cifar100
+```
+
+###### NASBench-NLP Dataset 
+We only compared algorithms using the new sampling pipeline on the NASBench-201 dataset. 
+1. Down load the `NASBench-NLP` dataset first.
+2. Modify the `nas_bench_nlp_path` variable in `nas_lib/config.py` to store the folder directory of `NASBench_NLP`.
+3. You can run the following command to compare algorithms on `NAS-Bench-NLP` dataset. *Change the `save_dir` to your directory before running.*
+```bash
+# gpus: the number of gpus used to execute searching.
+# save_dir: the output path.
+python train_multiple_gpus_close_domain.py --trials 600 --search_budget 100 --search_space nasbench_nlp --algo_params nasbench_nlp --gpus 1 --multiprocessing-distributed False --save_dir /home/albert_wei/Disk_A/train_output_npenas/nasbench_nlp/ --comparison_type algorithm --record_full_data F
+```
+4. Run the following command to visualize the comparison of algorithms. *Change the `save_dir` to the path of `save_dir` in step 6.*
+```bash
+python tools_close_domain/visualize_results.py --search_space nasbench_201 --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/ --draw_type ERRORBAR
+```
+5. Scaling Factor Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 100 --search_space nasbench_nlp --algo_params nasbench_nlp --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/nasbench_nlp/ --comparison_type scalar_compare --record_full_data T --record_kt T
+```
+6. ReLU CELU Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 100 --search_space nasbench_nlp --algo_params nasbench_nlp --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/nasbench_nlp/ --comparison_type relu_celu --record_full_data T --record_kt T --relu_celu_comparison_algo_type NPENAS_BO
+```
+
+###### NASBench-ASR Dataset 
+We only compared algorithms using the new sampling pipeline on the NASBench-201 dataset. 
+1. Down load the `NASBench-ASR` dataset first.
+2. Modify the `nas_bench_asr_path` variable in `nas_lib/config.py` to store the folder directory of `NASBench_ASR`.
+3. You can run the following command to compare algorithms on `NAS-Bench-ASR` dataset. *Change the `save_dir` to your directory before running.*
+```bash
+# gpus: the number of gpus used to execute searching.
+# save_dir: the output path.
+python train_multiple_gpus_close_domain.py --trials 600 --search_budget 100 --search_space nasbench_asr --algo_params nasbench_asr --gpus 1 --multiprocessing-distributed False --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_asr/ --comparison_type algorithm --record_full_data F
+```
+4. Run the following command to visualize the comparison of algorithms. *Change the `save_dir` to the path of `save_dir` in step 6.*
+```bash
+python tools_close_domain/visualize_results.py --search_space nasbench_asr --save_dir /home/albert_wei/Disk_A/train_output_npenas/npenas_201/ --draw_type ERRORBAR
+```
+5. Scaling Factor Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 100 --search_space nasbench_asr --algo_params nasbench_asr --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_asr/ --comparison_type scalar_compare --record_full_data T --record_kt T
+```
+6. ReLU CELU Analysis
+```bash
+python train_multiple_gpus_close_domain.py --trials 200 --search_budget 100 --search_space nasbench_asr --algo_params nasbench_asr --gpus 1 --save_dir /home/albert_wei/Disk_A/train_output_2021/npenas_asr/ --comparison_type relu_celu --record_full_data T --record_kt T --relu_celu_comparison_algo_type NPENAS_BO
 ```
 
 ### Open Domain Search
